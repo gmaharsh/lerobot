@@ -1033,3 +1033,27 @@ def test_incompatible_multi_target_resolutions_explains_no_global_size(caplog):
     assert (
         "no single global environment resolution can align all cameras simultaneously" in mismatch_warnings[0]
     )
+
+
+def test_global_resolution_advice_preserves_already_matching_camera(caplog):
+    env_cfg = SimpleNamespace(
+        features={
+            "cam1": PolicyFeature(type=FeatureType.VISUAL, shape=(360, 360, 3)),
+            "cam2": PolicyFeature(type=FeatureType.VISUAL, shape=(360, 360, 3)),
+        },
+        features_map={"cam1": "observation.images.cam1", "cam2": "observation.images.cam2"},
+        observation_height=360,
+        observation_width=360,
+    )
+    policy_cfg = SimpleNamespace(
+        input_features={
+            "observation.images.cam1": PolicyFeature(type=FeatureType.VISUAL, shape=(3, 256, 256)),
+            "observation.images.cam2": PolicyFeature(type=FeatureType.VISUAL, shape=(3, 360, 360)),
+        }
+    )
+
+    with caplog.at_level(logging.WARNING):
+        assert _warn_on_visual_resolution_mismatch(policy_cfg, env_cfg) is True
+
+    assert "--env.observation_height=256" not in caplog.text
+    assert "no single global environment resolution can align all cameras simultaneously" in caplog.text

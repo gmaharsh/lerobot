@@ -227,7 +227,9 @@ def _warn_on_visual_resolution_mismatch(
 
     suggestion = ""
     if mismatches and hasattr(env_config, "observation_height") and hasattr(env_config, "observation_width"):
-        expected_resolutions = sorted({pol_res for _, _, _, pol_res in mismatches if pol_res != (-1, -1)})
+        expected_resolutions = sorted(
+            {policy_cameras[key] for key in common_keys if len(mapped_env_cameras[key]) == 1}
+        )
         if len(expected_resolutions) == 1:
             exp_h, exp_w = expected_resolutions[0]
             suggestion = (
